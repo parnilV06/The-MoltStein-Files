@@ -1,4 +1,4 @@
-# 🔴 TMF — The Moltsteine Files
+# TMF — The MoltStein Files
 
 <p align="center">
   <img src="/public/logo.png" alt="TMF Logo" width="160" />
@@ -195,10 +195,10 @@ As agent ecosystems evolve, the archive will expand to include:
 **Parnil Vyawahare**
 Creator & Maintainer — The Moltsteine Files
 
-* GitHub: [https://github.com/](https://github.com/)
-* LinkedIn: [https://linkedin.com/](https://linkedin.com/)
-* Twitter/X: [https://twitter.com/](https://twitter.com/)
-* Portfolio: https://
+* GitHub: [https://github.com/parnilV06](https://github.com/parnilV06)
+* LinkedIn: [https://www.linkedin.com/in/parnil-vyawahare-70a1b0287/](https://www.linkedin.com/in/parnil-vyawahare-70a1b0287/)
+* Twitter/X: [https://x.com/VyawahareParnil](https://x.com/VyawahareParnil)
+* Portfolio: [https://portfolio-parnil-vyawahare.netlify.app/](https://portfolio-parnil-vyawahare.netlify.app/)
 
 ---
 
