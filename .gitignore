@@ -27,10 +27,13 @@ pnpm-debug.log*
 /scripts/output/
 /scripts/tmp/
 
+# Ignore scraper/data JSON only
 moltbook-posts-*.json
 
-# Ignore all JSON except package configs
-*.json
+# Allow config JSON files
+!tsconfig.json
+!jsconfig.json
+!next.config.json
 !package.json
 !package-lock.json
 
