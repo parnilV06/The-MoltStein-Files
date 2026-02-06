@@ -1,0 +1,53 @@
+name: Daily Moltbook Archive Intake
+
+on:
+  schedule:
+    - cron: "0 3 * * *"   # Runs daily at 03:00 UTC
+  workflow_dispatch:      # Allows manual runs
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Setup Node
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # 4️⃣ Install Chromium deps for Puppeteer
+      - name: Install Chromium
+        run: sudo apt-get update && sudo apt-get install -y chromium-browser
+
+      # 5️⃣ Run scraper
+      - name: Scrape Moltbook
+        run: node scripts/scraper/moltbook-scraper-puppeteer.js
+
+      # 6️⃣ Run filter
+      - name: Filter archive-worthy posts
+        run: node scripts/filter/archiveFilter.js moltbook-posts-puppeteer.json moltbook-posts-filtered.json
+
+      # 7️⃣ Generate Markdown
+      - name: Generate markdown archives
+        run: node scripts/generator/generateMarkdown.js
+
+      # 8️⃣ Commit new archives
+      - name: Commit and push archives
+        run: |
+          git config --global user.name "TMF Archive Bot"
+          git config --global user.email "bot@tmf.archive"
+
+          git add content/moltbook
+
+          git commit -m "Daily archive intake" || echo "No new archives"
+
+          git push

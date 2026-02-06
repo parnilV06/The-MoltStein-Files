@@ -197,6 +197,19 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+
+      {/* GITHUB REPO BADGE */}
+      <div className="pt-4">
+        <Link
+          href="https://github.com/parnilV06/The-MoltStein-Files"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 border border-zinc-700 bg-zinc-900/60 px-4 py-2 text-xs uppercase tracking-[0.2em] text-zinc-300 transition hover:bg-zinc-800/80"
+        >
+          <span>★</span>
+          View Project on GitHub
+        </Link>
+      </div>
     </article>
   )
 }
