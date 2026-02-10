@@ -1,6 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import {
+  getNextArchiveId,
+  getTodayDate,
+  formatDateForMetadata,
+  getNextDailyIntakeIndex,
+  generateFilename,
+  urlExistsInArchive,
+  generateIntakeBatchId,
+} from '../lib/idManager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,36 +39,57 @@ async function generateMarkdownFiles() {
 
     console.log(`📖 Processing ${posts.length} posts...\n`);
 
+    // Get today's date and initialize tracking
+    const todayDate = getTodayDate();
+    let currentIntakeIndex = getNextDailyIntakeIndex(OUTPUT_DIR, todayDate);
+    let currentArchiveId = getNextArchiveId(OUTPUT_DIR);
+
     let generatedCount = 0;
     let skippedCount = 0;
+    let duplicateCount = 0;
 
     for (let i = 0; i < posts.length; i++) {
       const post = posts[i];
-      const postNumber = String(i + 1).padStart(4, '0');
-      const filename = `MB-${postNumber}.md`;
-      const filepath = path.join(OUTPUT_DIR, filename);
 
-      // Check if file already exists
-      if (fs.existsSync(filepath)) {
-        console.log(`⏭️  Skipped: ${filename} (already exists)`);
-        skippedCount++;
+      // Check for duplicates before processing
+      if (urlExistsInArchive(OUTPUT_DIR, post.url)) {
+        console.log(`🔄 Duplicate: ${post.title.substring(0, 50)}... (URL already archived)`);
+        duplicateCount++;
         continue;
       }
 
-      // Generate markdown content
-      const markdown = generateMarkdown(post, `MB-${postNumber}`);
+      // Generate new hybrid filename
+      const filename = generateFilename(todayDate, currentIntakeIndex);
+      const filepath = path.join(OUTPUT_DIR, filename);
+
+      // Generate markdown content with metadata
+      const markdown = generateMarkdown(post, currentArchiveId, todayDate, currentIntakeIndex);
 
       // Write file
       fs.writeFileSync(filepath, markdown, 'utf-8');
-      console.log(`✅ Created: ${filename} - "${post.title.substring(0, 50)}..."`);
+      console.log(
+        `✅ Created: ${filename}` +
+        ` [Archive: ${currentArchiveId}, Intake: ${currentIntakeIndex}]` +
+        ` - "${post.title.substring(0, 45)}..."`
+      );
+
       generatedCount++;
+      currentIntakeIndex++;
+
+      // Parse next archive ID from the one we just generated
+      // (increment the counter for next iteration)
+      const archiveNum = parseInt(currentArchiveId.substring(3), 10);
+      currentArchiveId = `MB-${String(archiveNum + 1).padStart(5, '0')}`;
     }
 
     // Log summary
     console.log(`\n📊 Summary:`);
     console.log(`   Generated: ${generatedCount} files`);
-    console.log(`   Skipped: ${skippedCount} files (already exist)`);
-    console.log(`   Total posts processed: ${posts.length}`);
+    console.log(`   Duplicates skipped: ${duplicateCount} files`);
+    console.log(`   Total processed: ${posts.length}`);
+    console.log(`\n📅 Today's date: ${todayDate} (${formatDateForMetadata(todayDate)})`);
+    console.log(`📍 Next intake index tomorrow: ${currentIntakeIndex}`);
+    console.log(`🆔 Next archive ID: ${currentArchiveId}`);
     console.log(`\n💾 Files saved to: ${OUTPUT_DIR}`);
   } catch (error) {
     console.error('❌ Error generating markdown files:', error.message);
@@ -70,7 +100,7 @@ async function generateMarkdownFiles() {
 /**
  * Generate markdown content with frontmatter
  */
-function generateMarkdown(post, id) {
+function generateMarkdown(post, archiveId, dateYYYYMMDD, intakeIndex) {
   // Determine severity based on archive score or score
   const score = typeof post.archiveScore === 'number' ? post.archiveScore : post.score;
   const severity = getSeverity(score);
@@ -89,9 +119,13 @@ function generateMarkdown(post, id) {
   // Clean content
   const cleanedContent = cleanContent(post.content);
 
-  // Build frontmatter
+  // Generate metadata
+  const scrapeDateFormatted = formatDateForMetadata(dateYYYYMMDD);
+  const intakeBatchId = generateIntakeBatchId(dateYYYYMMDD, intakeIndex);
+
+  // Build frontmatter with hybrid ID system
   const frontmatter = `---
-id: ${id}
+id: ${archiveId}
 title: "${escapeQuotes(post.title)}"
 agent: "${escapeQuotes(post.agent || 'Unknown')}"
 date: "${formattedDate}"
@@ -102,9 +136,17 @@ categories: [${categories.map((c) => `"${escapeQuotes(c)}"`).join(', ')}]
 archive_reason: [${archiveReasons.map((r) => `"${escapeQuotes(r)}"`).join(', ')}]
 excerpt: "${escapeQuotes(excerpt)}"
 summary: "${escapeQuotes(summary)}"
----`;
+---
 
-  return `${frontmatter}\n\n${cleanedContent}`;
+Archive ID: ${archiveId}
+Intake Batch: ${intakeBatchId}
+Scrape Date: ${scrapeDateFormatted}
+
+---
+
+${cleanedContent}`;
+
+  return frontmatter;
 }
 
 /**

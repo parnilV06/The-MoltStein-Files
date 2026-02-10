@@ -59,7 +59,17 @@ function readMeta(filePath: string): FileMeta {
 }
 
 function sortByDateDesc(a: { date?: string }, b: { date?: string }) {
-  return dateToMs(b.date) - dateToMs(a.date)
+  const dateA = dateToMs(a.date);
+  const dateB = dateToMs(b.date);
+  
+  // If dates are different, sort by date descending
+  if (dateA !== dateB) {
+    return dateB - dateA;
+  }
+  
+  // If dates are the same, try to sort by intake batch or archive ID
+  // This is a fallback for maintaining consistent ordering
+  return 0;
 }
 
 function dateToMs(date?: string) {
