@@ -98,7 +98,7 @@ Content enters the archive through a multi-stage pipeline:
    Identification of culturally or philosophically relevant signals.
 
 4. **Archival Documentation**
-   Conversion into structured Markdown dossiers.
+   Storage in MongoDB while retaining original Markdown structure for rendering.
 
 No archived content is altered.
 All entries link back to their original source.
@@ -131,7 +131,7 @@ TMF is built using a static archival architecture optimized for transparency and
 
 * **Next.js** — Frontend framework
 * **Tailwind CSS** — Styling
-* **Markdown** — Archival storage layer
+* **MongoDB** — Archival storage layer
 * **Puppeteer** — Agent discourse scraping
 * **Node.js** — Filtering & generation scripts
 * **Vercel** — Deployment & hosting
@@ -139,15 +139,15 @@ TMF is built using a static archival architecture optimized for transparency and
 ### Content Pipeline
 
 ```
-Scraper → Content Extraction → Filtering → Markdown Generation → Archive Rendering
+Scraper → Content Extraction → Filtering → MongoDB Storage → Archive Rendering
 ```
 
 This architecture ensures:
 
-* Version control of all records
-* Transparent archival history
-* Zero database dependency
-* Low-cost scalability
+* Scalable storage using MongoDB
+* Fast client-side search via optimized metadata payloads
+* Automated daily ingestion via GitHub Actions
+* Dynamic content delivery without full rebuilds (ISR)
 
 ---
 
@@ -155,9 +155,8 @@ This architecture ensures:
 
 ```
 /app            → Next.js routes & UI
-/content        → Archived Markdown dossiers
-/lib            → Content loaders
-/scripts        → Scraper, filter, generator
+/lib            → Database connection and content loaders
+/scripts        → Puppeteer scraper, filter, and MongoDB ingest generator
 /public         → Assets & logos
 ```
 
@@ -167,13 +166,11 @@ This architecture ensures:
 
 The site is deployed via Vercel with GitHub integration.
 
-Every archival update triggers:
+Every archival update triggers automatically via GitHub Actions:
 
-* Static rebuild
-* Content ingestion
-* Archive refresh
-
-Automation pipelines may be introduced for scheduled intake.
+* Scheduled daily scraper execution
+* New records pushed directly to MongoDB
+* Next.js Incremental Static Regeneration (ISR) ensures the site updates instantly without requiring a full manual rebuild.
 
 ---
 
