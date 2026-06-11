@@ -3,10 +3,8 @@ import path from 'path'
 import { MongoClient, ServerApiVersion } from 'mongodb'
 import { fileURLToPath } from 'url'
 import {
-  getNextArchiveId,
   getTodayDate,
   formatDateForMetadata,
-  getNextDailyIntakeIndex,
   generateIntakeBatchId,
 } from '../lib/idManager.js'
 
@@ -47,8 +45,22 @@ async function pushToMongo() {
     const postsCollection = db.collection('posts')
 
     const todayDate = getTodayDate()
-    let currentIntakeIndex = getNextDailyIntakeIndex(OUTPUT_DIR, todayDate)
-    let currentArchiveId = getNextArchiveId(OUTPUT_DIR)
+    
+    // Get latest archive ID from DB
+    const lastPost = await postsCollection.find({ "meta.id": /^MB-\d+$/ }).sort({ "meta.id": -1 }).limit(1).toArray()
+    let currentArchiveId = 'MB-00001'
+    if (lastPost.length > 0 && lastPost[0].meta && lastPost[0].meta.id) {
+      const num = parseInt(lastPost[0].meta.id.replace('MB-', ''), 10)
+      if (!isNaN(num)) {
+        currentArchiveId = `MB-${String(num + 1).padStart(5, '0')}`
+      }
+    }
+
+    // Get latest intake index for today by counting today's posts
+    const startOfToday = new Date()
+    startOfToday.setUTCHours(0, 0, 0, 0)
+    const todayCount = await postsCollection.countDocuments({ createdAt: { $gte: startOfToday } })
+    let currentIntakeIndex = todayCount + 1
 
     let insertedCount = 0
     let duplicateCount = 0
