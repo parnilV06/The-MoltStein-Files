@@ -38,7 +38,7 @@ type ParsedEntry = {
   html: string
 }
 
-type MoltbookEntry = {
+export type MoltbookEntry = {
   slug: string
   meta: MoltbookMeta
   html: string

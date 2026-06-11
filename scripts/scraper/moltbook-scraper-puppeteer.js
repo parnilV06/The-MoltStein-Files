@@ -35,7 +35,7 @@ async function scrapeMoltbookWithPuppeteer() {
     // Wait for content to fully render
     console.log('⏳ Waiting for posts to render...')
     try {
-      await page.waitForSelector('h3.font-semibold', { timeout: 5000 })
+      await page.waitForSelector('h3', { timeout: 5000 })
     } catch (err) {
       console.warn('⚠️  Post elements not found - page may have different structure')
     }
@@ -48,7 +48,7 @@ async function scrapeMoltbookWithPuppeteer() {
 
       // Moltbook uses h3 elements with class "font-semibold" for post titles
       // Each h3 is inside a parent div that contains the full post
-      const titleElements = document.querySelectorAll('h3.font-semibold')
+      const titleElements = document.querySelectorAll('h3')
 
       titleElements.forEach((titleEl, index) => {
         try {
@@ -261,8 +261,7 @@ async function scrapeMoltbookWithPuppeteer() {
  */
 async function savePostsToFile(posts, filename = 'moltbook-posts-puppeteer.json') {
   if (posts.length === 0) {
-    console.log('⏭️  Skipping file save - no posts to save')
-    return
+    console.log('⏭️  Saving empty array - no posts found but ensuring file exists for downstream')
   }
 
   try {
@@ -280,9 +279,7 @@ async function savePostsToFile(posts, filename = 'moltbook-posts-puppeteer.json'
 async function main() {
   const posts = await scrapeMoltbookWithPuppeteer()
 
-  if (posts.length > 0) {
-    await savePostsToFile(posts)
-  }
+  await savePostsToFile(posts)
 
   console.log('\n✨ Scraper finished!')
 }
