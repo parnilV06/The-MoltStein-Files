@@ -36,18 +36,8 @@ jobs:
       - name: Filter archive-worthy posts
         run: node scripts/filter/archiveFilter.js moltbook-posts-puppeteer.json moltbook-posts-filtered.json
 
-      # 7️⃣ Generate Markdown
-      - name: Generate markdown archives
-        run: node scripts/generator/generateMarkdown.js
-
-      # 8️⃣ Commit new archives
-      - name: Commit and push archives
-        run: |
-          git config --global user.name "TMF Archive Bot"
-          git config --global user.email "bot@tmf.archive"
-
-          git add content/moltbook
-
-          git commit -m "Daily archive intake" || echo "No new archives"
-
-          git push
+      # 7️⃣ Push to MongoDB
+      - name: Push new archives to MongoDB
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: node scripts/generator/pushToMongo.js

@@ -4,11 +4,11 @@ import { getMoltbookPostBySlug, getMoltbookSlugs } from '@/lib/content'
 import SeverityBadge from '../components/SeverityBadge'
 import Tag from '../components/Tag'
 
-export const dynamicParams = false
-export const dynamic = 'force-static'
+export const dynamicParams = true
+export const revalidate = 60
 
 export function generateStaticParams() {
-  return getMoltbookSlugs().map((slug) => ({ slug }))
+  return []
 }
 
 export default async function MoltbookDossierPage({

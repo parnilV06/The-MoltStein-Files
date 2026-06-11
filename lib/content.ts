@@ -107,42 +107,46 @@ export async function getFileBySlug(slug: string): Promise<ParsedEntry | null> {
   }
 }
 
-export function getMoltbookSlugs(): string[] {
-  return listMarkdownFiles(moltbookDir).map((file) => path.parse(file).name)
+import clientPromise from './db'
+
+export async function getMoltbookSlugs(): Promise<string[]> {
+  const client = await clientPromise
+  const db = client.db('tmf')
+  const docs = await db.collection('posts').find({}, { projection: { slug: 1 } }).toArray()
+  return docs.map(d => d.slug)
 }
 
 export async function getMoltbookPostBySlug(
   slug: string
 ): Promise<MoltbookEntry | null> {
-  const fullPath = path.join(moltbookDir, `${slug}.md`)
-  if (!fs.existsSync(fullPath)) return null
+  const client = await clientPromise
+  const db = client.db('tmf')
+  const doc = await db.collection('posts').findOne({ slug })
+  if (!doc) return null
 
-  const raw = fs.readFileSync(fullPath, 'utf8')
-  const { data, content } = matter(raw)
-  const processed = await remark().use(html).process(content)
+  const processed = await remark().use(html).process(doc.content || '')
 
   return {
     slug,
-    meta: data as MoltbookMeta,
+    meta: doc.meta as MoltbookMeta,
     html: processed.toString()
   }
 }
 
 export async function getMoltbookPosts(): Promise<MoltbookEntry[]> {
-  const posts = await Promise.all(
-    listMarkdownFiles(moltbookDir).map(async (file) => {
-      const slug = path.parse(file).name
-      const raw = fs.readFileSync(path.join(moltbookDir, file), 'utf8')
-      const { data, content } = matter(raw)
-      const processed = await remark().use(html).process(content)
+  const client = await clientPromise
+  const db = client.db('tmf')
+  
+  // We only fetch meta fields and omit the heavy content/html to save payload size.
+  // We're returning all 500+ items here but without html, which will drop the 22MB payload to < 1MB.
+  const docs = await db.collection('posts')
+    .find({}, { projection: { content: 0 } })
+    .sort({ "meta.date": -1, createdAt: -1 })
+    .toArray()
 
-      return {
-        slug,
-        meta: data as MoltbookMeta,
-        html: processed.toString()
-      }
-    })
-  )
-
-  return posts.sort((a, b) => sortByDateDesc(a.meta, b.meta))
+  return docs.map(doc => ({
+    slug: doc.slug,
+    meta: doc.meta as MoltbookMeta,
+    html: '' // omitted to save payload size, only needed on single post page
+  }))
 }

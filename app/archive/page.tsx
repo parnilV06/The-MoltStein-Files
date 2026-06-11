@@ -4,7 +4,7 @@ import SeverityBadge from './components/SeverityBadge'
 import Tag from './components/Tag'
 import ArchiveSearchClient from './components/ArchiveSearchClient'
 
-export const dynamic = 'force-static'
+export const revalidate = 60 // Revalidate every minute (ISR)
 
 export default async function MoltbookPage() {
   const posts = await getMoltbookPosts()
